@@ -22,7 +22,7 @@ class InputForm(FlaskForm):
     extended_lib = BooleanField('Extended Library handling')
 
     language = SelectField('What language is included in your upload', validators=[Required()],
-                         choices=[('0', 'R'), ('1', 'Python')])
+                         choices=[('R', 'R'), ('Python', 'Python')])
 
     # clean_code = BooleanField('Attempt to automatically clean code')
     submit = SubmitField('Build Docker Image')

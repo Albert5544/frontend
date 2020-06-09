@@ -18,7 +18,7 @@ from app.models import User, Dataset
 from werkzeug.urls import url_parse
 from werkzeug.utils import secure_filename
 from app.helpers import build_image, gather_json_files_from_url
-from app.py_helpers import py_build_image
+from app.build_image_py import build_py_image
 from threading import Thread
 
 
@@ -46,7 +46,6 @@ def containrize():
     ad_form = AdvancedInputForm()
     if form.validate_on_submit():
         # TODO: support for DOI or other libraries
-
         # if form.doi.data:
         #     task = build_image.apply_async(kwargs={'current_user_id': current_user.id,
         #                                            'doi': form.doi.data,
@@ -67,22 +66,31 @@ def containrize():
             shutil.rmtree(os.path.join(app.instance_path, 'temp'))
             os.makedirs(os.path.join(app.instance_path, 'temp'))
 
+
+
+        print("MARK1")
         if form.zip_file.data:
             zip_file = form.zip_file.data
             filename = secure_filename(zip_file.filename)
-            zipfile_path = os.path.join(app.instance_path, 'r_datasets', filename)
-            zip_file.save(os.path.join(app.instance_path, 'r_datasets', filename))
+            if form.language.data == "Python":
+                zipfile_path = os.path.join(app.instance_path, 'py_datasets', filename)
+            else:
+                zipfile_path = os.path.join(app.instance_path, 'r_datasets', filename)
+            zip_file.save(zipfile_path)
         else:
             filename = secure_filename(form.name.data)
-            zipfile_path = os.path.join(app.instance_path, 'r_datasets', form.name.data + ".zip")
-            zip_file = zipfile.ZipFile(zipfile_path, "w")
+            if form.language.data == "Python":
+                zipfile_path = os.path.join(app.instance_path, 'py_datasets', form.name.data + ".zip")
+            else:
+                zipfile_path = os.path.join(app.instance_path, 'r_datasets', form.name.data + ".zip")
+            zip_file = zipfile.ZipFile(zipfile_path, "w+")
             file_list = request.files.getlist('set_file')
             for f in file_list:
                 f.save(os.path.join(app.instance_path, 'temp', f.filename))
             for temp_file in listdir(os.path.join(app.instance_path, 'temp')):
                 zip_file.write(os.path.join(app.instance_path, 'temp', temp_file), temp_file)
             zip_file.close()
-
+        print("MARK2")
         json_input = {'user_id': current_user.id, 'zipfile_path': zipfile_path,
                       'name': form.name.data, "language": form.language.data,
                       'need_prepro': form.fix_code.data,
@@ -100,9 +108,14 @@ def containrize():
                 json_input["adv_opt"] = json_ad_input
                 break
         # TODO: The backend function will be called here
-        if form.language.data is "python":
+        print("lang"+form.language.data)
+        if form.language.data == "Python":
+            print("python" + form.language.data)
             # TODO: call to pyPlace
-            task = py_build_image.apply_async(kwargs={'info': json.dumps(json_input)})
+            task = build_py_image.apply_async(kwargs={'zip_file': filename,
+                                                    'current_user_id': current_user.id,
+                                                    'name': form.name.data,
+                                                    'preprocess': form.fix_code.data})
         else:
             # TODO: call to containR
             task = build_image.apply_async(kwargs={'zip_file': filename,
@@ -111,6 +124,7 @@ def containrize():
                                                     'preprocess': form.fix_code.data})
         session['task_id'] = task.id
         return redirect(url_for('build_status'))
+    print("MARK3")
     return render_template('containrize.html',
                            title='Containrize', form=form, ad_form=ad_form)
 
