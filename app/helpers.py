@@ -932,7 +932,7 @@ def gather_json_files_from_url(url):
 
 
 @celery.task(bind=True)  # allows the task to be run in the background with Celery
-def build_image(self,info):
+def build_image(self, current_user_id, name, preprocess, dataverse_key='', doi='', zip_file=''):
     """Build a docker image for a user-provided dataset
     Parameters
     def build_image(self,user_id,zipfile_path,
@@ -958,16 +958,16 @@ def build_image(self,info):
     # either get the dataset from the .zip file or download it from dataverse
 
     dataset_dir = ''
-    current_user_id = info.user_id
-    name = info.name
-    preprocess = info.need_prepro,
-    dataverse_key = ''
-    doi = ''
-    zip_file = info.zipfile_path
+    # current_user_id = info.user_id
+    # name = info.name
+    # preprocess = info.need_prepro,
+    # dataverse_key = ''
+    # doi = ''
+    # zip_file = info.zipfile_path
 
     if zip_file:
         # assemble path to zip_file
-        zip_path =info.zipfile_path
+        zip_path = os.path.join(app.instance_path, 'r_datasets', zip_file)
         # unzip the zipped directory and remove zip file
         with zipfile.ZipFile(zip_path) as zip_ref:
             dir_name = zip_ref.namelist()[0].strip('/')

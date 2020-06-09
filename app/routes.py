@@ -73,10 +73,11 @@ def containrize():
             zipfile_path = os.path.join(app.instance_path, 'r_datasets', filename)
             zip_file.save(os.path.join(app.instance_path, 'r_datasets', filename))
         else:
+            filename = secure_filename(form.name.data)
             zipfile_path = os.path.join(app.instance_path, 'r_datasets', form.name.data + ".zip")
             zip_file = zipfile.ZipFile(zipfile_path, "w")
-            flist = request.files.getlist('set_file')
-            for f in flist:
+            file_list = request.files.getlist('set_file')
+            for f in file_list:
                 f.save(os.path.join(app.instance_path, 'temp', f.filename))
             for temp_file in listdir(os.path.join(app.instance_path, 'temp')):
                 zip_file.write(os.path.join(app.instance_path, 'temp', temp_file), temp_file)
@@ -104,7 +105,10 @@ def containrize():
             task = py_build_image.apply_async(kwargs={'info': json.dumps(json_input)})
         else:
             # TODO: call to containR
-            task = build_image.apply_async(kwargs={'info': json.dumps(json_input)})
+            task = build_image.apply_async(kwargs={'zip_file': filename,
+                                                    'current_user_id': current_user.id,
+                                                    'name': form.name.data,
+                                                    'preprocess': form.fix_code.data})
         session['task_id'] = task.id
         return redirect(url_for('build_status'))
     return render_template('containrize.html',
