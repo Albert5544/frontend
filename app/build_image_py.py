@@ -238,7 +238,9 @@ def build_py_image(self, current_user_id, name, preprocess, dataverse_key='', do
     # 5.) Change pemissions, containers have had issues with correct permissions previously
     # 6.) Run analyses
     # 7.) Collect installed packages for report
-    with open('Dockerfile', 'w+') as new_docker:
+    docker_file_dir = os.path.join(app.instance_path,
+                                   'py_datasets', dir_name)
+    with open(os.path.join(docker_file_dir, 'Dockerfile'), 'w+') as new_docker:
         if py2:
             new_docker.write('FROM python: 2\n')
         else:
@@ -262,8 +264,6 @@ def build_py_image(self, current_user_id, name, preprocess, dataverse_key='', do
         new_docker.write("RUN /home/py_datasets/get_prov_for_doi.sh " \
                          + "/home/py_datasets/" + dir_name + " /home/py_datasets/get_dataset_provenance.py\n")
 
-        d = DockerImageBuilder()
-        d.buildImage("/home/py_datasets/" + dir_name)
 
     # create docker client instance
     client = docker.from_env()
