@@ -1,0 +1,1 @@
+# pyplace_static
