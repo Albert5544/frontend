@@ -7,35 +7,63 @@
 {% endblock %}
 {% block app_content %}
 <script>
+    function isInArray(arr,value){
+        for(var i = 0; i < arr.length; i++){
+       if(value === arr[i]){
+            return true;
+         }
+     }
+     return false;
+ }
+function hide_ad()
+{
+    let advanced_options=["command_line","provenance","code_btw","sample_output","pkg_asked"]
+    let control_label_class=document.getElementsByClassName("control-label")
+        for(let i=0;i<control_label_class.length;i++){
+        if(isInArray(advanced_options,control_label_class.item(i).getAttribute("for"))){
+            control_label_class.item(i).style.display="none"
+        }
+    }
+    for(let i=0;i<advanced_options.length;i++){
+        document.getElementById(advanced_options[i]).style.display="none"
+    }
+    document.getElementById('button1').value="Show Advanced Options";
+}
 function block()
 {
-if (document.getElementById('text').style.display==='block'){
-document.getElementById('button1').value="Advanced Options>>";
-document.getElementById('text').style.display='none';
+    let control_label_class = document.getElementsByClassName("control-label");
+    let advanced_options=["command_line","provenance","code_btw","sample_output","pkg_asked"]
+if (document.getElementById('button1').value==="Show Advanced Options"){
+    document.getElementById('button1').value="Hide Advanced Options";
+    for(let i=0;i<control_label_class.length;i++){
+        if(isInArray(advanced_options,control_label_class.item(i).getAttribute("for"))){
+            control_label_class.item(i).style.display="block"
+        }
+    }
+        for(let i=0;i<advanced_options.length;i++){
+        document.getElementById(advanced_options[i]).style.display="block"
+    }
 }else{
-document.getElementById('button1').value="Hide<<";
-document.getElementById('text').style.display='block';
+    hide_ad()
+
 }
 }
 </script>
 
-
+<body onload="hide_ad()">
 
     <div class="row">
         <h1 class="text-primary">Build Docker Image for Dataset</h1>
         <p class="text-muted">For instructions, see Part 3 of the <a href=" {{url_for('instructions')}}">instructions page</a>.</h2>
-        <input type='button' id="button1" value="Advanced Options>>" onclick="block()">
+        <input type='button' id="button1" value="Show Advanced Options" onclick="block()">
         <div class="col-md-4 text-muted">
-            {{ wtf.quick_form(form) }}
+        {{ wtf.quick_form(form) }}
+
 
         </div>
-        <div id='text' style="display:none;">
-            <div class="col-md-4 text-muted">
 
-                {{ wtf.quick_form(ad_form) }}</div>
     </div>
-    </div>
-
+</body>
 
 
 

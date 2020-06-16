@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, FormField
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, Optional, Length, Required
 from app.models import User, Dataset
 from flask_login import current_user, login_user, login_required, logout_user
@@ -11,10 +11,13 @@ class AdvancedInputForm(FlaskForm):
     provenance = StringField('Provenance')
     code_btw = StringField('Line of code to run between package install and  execute')
     sample_output = StringField('Sample output that you want to compare for')
+    pkg_asked = StringField('Additional packages to be installed:'
+                            ' in the json format of {"pkg":[{pkg_name:string,PypI_name:string}]')
 
 
 class InputForm(FlaskForm):
     # doi = StringField('Harvard Dataverse DOI', validators=[Optional()])
+
     zip_file = FileField('Zip File Containing Dataset')
     set_file = FileField('or---A set of Data file and scripts', render_kw={'multiple': True})
     name = StringField('Name of the Dataset', validators=[DataRequired()])
@@ -22,16 +25,22 @@ class InputForm(FlaskForm):
     extended_lib = BooleanField('Extended Library handling')
 
     language = SelectField('What language is included in your upload', validators=[Required()],
-                         choices=[('R', 'R'), ('Python', 'Python')])
-
-    # clean_code = BooleanField('Attempt to automatically clean code')
+                           choices=[('R', 'R'), ('Python', 'Python')])
+    command_line = StringField('Run instruction')
+    provenance = StringField('Provenance')
+    code_btw = StringField('Line of code to run between package install and  execute')
+    sample_output = StringField('Sample output that you want to compare for')
+    pkg_asked = StringField('Additional packages to be installed:'
+                            ' in the json format of {"pkg":[{"pkg_name":string,"PypI_name":string}]}')
     submit = SubmitField('Build Docker Image')
 
-    def validate_set_file(self, zip_file):
+    # clean_code = BooleanField('Attempt to automatically clean code')
+
+    def validate_zip_file(self, set_file):
         # make sure there's either a DOI or a .zip file upload
         # if (not self.doi.data) and (self.zip_file.data is None) and (self.set_file.data is None):
-        if (self.zip_file.data is None) and (self.set_file.data is None):
-            raise ValidationError('Either the 1)dataset DOI or 2)a .zip or 3)a set of files '
+        if (not self.zip_file.data) and (not self.set_file.data):
+            raise ValidationError('Either the 1)a .zip or 2)a set of files '
                                   'containing the dataset is required.')
 
     def validate_name(self, name):

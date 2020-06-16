@@ -11,8 +11,7 @@ from shutil import copyfile
 from sqlalchemy import desc
 from flask import render_template, flash, redirect, url_for, request, g, jsonify, session
 from app import app, db, login
-from app.forms import LoginForm, RegistrationForm, ResetPasswordForm, ResetPasswordRequestForm, InputForm, \
-    AdvancedInputForm
+from app.forms import LoginForm, RegistrationForm, ResetPasswordForm, ResetPasswordRequestForm, InputForm
 from flask_login import current_user, login_user, login_required, logout_user
 from app.models import User, Dataset
 from werkzeug.urls import url_parse
@@ -43,7 +42,6 @@ def index():
 @login_required
 def containrize():
     form = InputForm()
-    ad_form = AdvancedInputForm()
     if form.validate_on_submit():
         # TODO: support for DOI or other libraries
         # if form.doi.data:
@@ -66,8 +64,6 @@ def containrize():
             shutil.rmtree(os.path.join(app.instance_path, 'temp'))
             os.makedirs(os.path.join(app.instance_path, 'temp'))
 
-
-
         print("MARK1")
         if form.zip_file.data:
             zip_file = form.zip_file.data
@@ -83,7 +79,7 @@ def containrize():
                 zipfile_path = os.path.join(app.instance_path, 'py_datasets', form.name.data + ".zip")
             else:
                 zipfile_path = os.path.join(app.instance_path, 'r_datasets', form.name.data + ".zip")
-            zip_file = zipfile.ZipFile(zipfile_path, "w+")
+            zip_file = zipfile.ZipFile(zipfile_path, "w")
             file_list = request.files.getlist('set_file')
             for f in file_list:
                 f.save(os.path.join(app.instance_path, 'temp', f.filename))
@@ -98,35 +94,36 @@ def containrize():
                       'adv_opt': None
                       }
         json_ad_input = {
-            'cmd': ad_form.command_line.data,
-            'sample_output': ad_form.sample_output.data,
-            'code_btw': ad_form.code_btw.data,
-            'prov': ad_form.provenance.data
+            'cmd': form.command_line.data,
+            'sample_output': form.sample_output.data,
+            'code_btw': form.code_btw.data,
+            'prov': form.provenance.data
         }
         for value in json_ad_input.values():
             if value is not None:
                 json_input["adv_opt"] = json_ad_input
                 break
         # TODO: The backend function will be called here
-        print("lang"+form.language.data)
+        print("lang" + form.language.data)
         if form.language.data == "Python":
             print("python" + form.language.data)
             # TODO: call to pyPlace
             task = build_py_image.apply_async(kwargs={'zip_file': filename,
-                                                    'current_user_id': current_user.id,
-                                                    'name': form.name.data,
-                                                    'preprocess': form.fix_code.data})
+                                                      'current_user_id': current_user.id,
+                                                      'name': form.name.data,
+                                                      'preprocess': form.fix_code.data,
+                                                      'user_pkg': form.pkg_asked.data})
         else:
             # TODO: call to containR
             task = build_image.apply_async(kwargs={'zip_file': filename,
-                                                    'current_user_id': current_user.id,
-                                                    'name': form.name.data,
-                                                    'preprocess': form.fix_code.data})
+                                                   'current_user_id': current_user.id,
+                                                   'name': form.name.data,
+                                                   'preprocess': form.fix_code.data})
         session['task_id'] = task.id
         return redirect(url_for('build_status'))
     print("MARK3")
     return render_template('containrize.html',
-                           title='Containrize', form=form, ad_form=ad_form)
+                           title='Containrize', form=form)
 
 
 @app.route('/build-status', methods=['GET', 'POST'])
