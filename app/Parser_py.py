@@ -17,25 +17,26 @@ class Parser_py:
 
     def get_file_info(self):
         self.cursor.execute(
-            'SELECT DISTINCT a.id, c.first_char_line, a.name, f.name, f.mode FROM activation a, file_access f'
-            ',evaluation e, code_component c'
-            ' WHERE c.trial_id = ? AND a.id = f.activation_id AND f.id=e.activation_id AND e.code_component_id=c.id'
-            ' ORDER BY a.id', (self.trial_id,))
+            'SELECT DISTINCT t.script, f.name, f.mode '
+            'FROM trial t, code_block cb, activation a, file_access f '
+            'WHERE t.main_id = ? AND t.main_id=cb.trial_id AND cb.id= a.code_block_id '
+            'AND f.activation_id=a.id '
+            'ORDER by t.main_id ', (self.trial_id,))
         file_info = self.cursor.fetchall()
         current=None
-        if(len(file_info)>=1):
-            if (len(file_info[0]) >= 1):
+        if len(file_info)>=1:
+            if len(file_info[0]) >= 1:
                 current = file_info[0][0]
             all_script_infos = []
-            script_current = Script(file_info[0][0], file_info[0][1])
+            script_current = Script(file_info[0][0])
             for i in range(0, len(file_info)):
                 f = file_info[i]
                 if current != f[0]:
-                    script_current = Script(f[0], f[1])
-                if f[4] == "rU" or f[4] == "rb":
-                    script_current.add_input_file(f[3])
-                if f[4] == "wU" or f[4] == "wb":
-                    script_current.add_output_file(f[3])
+                    script_current = Script(f[0])
+                if f[2] == "rU" or f[2] == "rb":
+                    script_current.add_input_file(f[1])
+                if f[2] == "wU" or f[2] == "wb":
+                    script_current.add_output_file(f[1])
                 if i + 1 >= len(file_info) or file_info[i][0] != file_info[i + 1][0]:
                     all_script_infos.append(script_current.get_script_report())
                 current = f[0]
@@ -71,11 +72,10 @@ class Parser_py:
 
 class Script(object):
 
-    def __init__(self, id, line):
+    def __init__(self, id):
         self.input_files = []
         self.output_files = []
         self.id = id
-        self.line = line
 
     def get_id(self):
         return self.id
@@ -86,8 +86,6 @@ class Script(object):
     def get_input_files(self):
         return self.input_files
 
-    def get_line(self):
-        return self.line
 
     def add_input_file(self, file):
         self.input_files.append(file)
@@ -96,7 +94,7 @@ class Script(object):
         self.output_files.append(file)
 
     def get_script_report(self):
-        jsontext = {"script " + str(self.id) + ", line " + str(self.line):
+        jsontext = {str(self.id) :
                         {"input files": self.input_files, "output files": self.output_files}}
 
         return jsontext

@@ -59,7 +59,7 @@ def get_imports(path,foldername,user_defined_modules):
 
     for i in import_sets:
         if(not(i in user_defined_modules) and not(i in built_in_modules2) and not(i in built_in_modules3)):
-            if(pypiName(i)):
+            if(not pypiName(i)):
                 docker_pkgs.append(i)
             else:
                 packages_to_ask_user.append(i)

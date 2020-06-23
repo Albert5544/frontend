@@ -1,1 +1,0 @@
-{"pkg":[{"pkg_name":"numpy","PypI_name":"numpy"},{"pkg_name":"statsmodels","PypI_name":"statsmodels"},{"pkg_name":"pandas","PypI_name":"pandas"},{"pkg_name":"scipy","PypI_name":"scipy"}]}

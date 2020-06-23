@@ -73,18 +73,48 @@ def containrize():
             else:
                 zipfile_path = os.path.join(app.instance_path, 'r_datasets', filename)
             zip_file.save(zipfile_path)
+            
+            multi = 0
+            bool_dir = False
+            
+            with zipfile.ZipFile(zipfile_path) as myzip:   
+                namelist = myzip.infolist()
+                for i in namelist:
+                    arr = i.filename.split('/')
+                    arr = list(filter(lambda x: x !='',arr))
+                    if(len(arr)==1):
+                         multi = multi + 1
+                         if(i.is_dir()):
+                             bool_dir = True
+            
+                # zipList = list(zipfile.Path(myzip).iterdir())
+                if(multi != 1 or not(bool_dir)):
+                    f_name = filename[:(filename.index('.'))]
+                    os.makedirs(os.path.join(app.instance_path,'py_datasets',f_name))
+                    myzip.extractall(os.path.join(app.instance_path,'py_datasets',f_name))
+                    os.remove(zipfile_path)
+                    z = zipfile.ZipFile(os.path.join(app.instance_path,'py_datasets',filename),'w')
+                    p =  os.path.join(app.instance_path,'py_datasets',f_name)
+                    for root,dirs,files in os.walk(p):
+                        for file in files:
+                            z.write(os.path.join(root,file),os.path.relpath(os.path.join(root,file),os.path.join(p,'..')))
+                    z.close()
+                    shutil.rmtree(os.path.join(app.instance_path,'py_datasets',f_name),ignore_errors = True)    
         else:
-            filename = secure_filename(form.name.data)
+            filename = secure_filename(form.name.data+'.zip')
             if form.language.data == "Python":
                 zipfile_path = os.path.join(app.instance_path, 'py_datasets', form.name.data + ".zip")
             else:
                 zipfile_path = os.path.join(app.instance_path, 'r_datasets', form.name.data + ".zip")
             zip_file = zipfile.ZipFile(zipfile_path, "w")
             file_list = request.files.getlist('set_file')
+            os.makedirs(os.path.join(app.instance_path,'temp',form.name.data))
             for f in file_list:
-                f.save(os.path.join(app.instance_path, 'temp', f.filename))
-            for temp_file in listdir(os.path.join(app.instance_path, 'temp')):
-                zip_file.write(os.path.join(app.instance_path, 'temp', temp_file), temp_file)
+                f.save(os.path.join(app.instance_path, 'temp',form.name.data,f.filename))
+            pth = os.path.join(app.instance_path,'temp',form.name.data)
+            for root,dirs,files in os.walk(pth):
+                for file in files:
+                    zip_file.write(os.path.join(pth,file),os.path.relpath(os.path.join(root,file),os.path.join(pth,'..')))
             zip_file.close()
         print("MARK2")
         json_input = {'user_id': current_user.id, 'zipfile_path': zipfile_path,
@@ -112,7 +142,8 @@ def containrize():
                                                       'current_user_id': current_user.id,
                                                       'name': form.name.data,
                                                       'preprocess': form.fix_code.data,
-                                                      'user_pkg': form.pkg_asked.data})
+                                                      'user_pkg': form.pkg_asked.data
+                                                      ,'run_instr':form.command_line.data})
         else:
             # TODO: call to containR
             task = build_image.apply_async(kwargs={'zip_file': filename,

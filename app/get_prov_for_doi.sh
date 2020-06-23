@@ -1,3 +1,4 @@
+#!/bin/bash
 doi_direct="$1"
 r_collect="$2"
 
