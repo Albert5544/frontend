@@ -5,14 +5,9 @@ import os
 class ReportGenerator:
 
     def generate_report(self, parserlist,target_path):
-        pkgs=[]
         scripts=[]
         for parser in parserlist:
-            pkgs.append(self.get_pkg_report(parser.get_pkg_info()))
             scripts.append(parser.get_file_info())
-        # jsontext = {
-        #     "Pyplace Report": {"Modules Depended": (pkgs),
-        #                        "Individual Scripts": (scripts)}}
         with open(os.path.join(target_path,"script_info.json"), 'w+') as outputfile:
             json.dump(scripts, outputfile)
 

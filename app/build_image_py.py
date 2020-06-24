@@ -147,7 +147,7 @@ def download_dataset(doi, destination, dataverse_key, api_url="https://dataverse
 
 
 @celery.task(bind=True)
-def build_py_image(self, current_user_id, name, preprocess, dataverse_key='', doi='', zip_file='',run_instr = '',
+def build_py_image(self, current_user_id, name, preprocess, dataverse_key='', doi='', zip_file='', run_instr='',
                    user_pkg=''):
     ########## GETTING DATA ######################################################################
     # either get the dataset from the .zip file or download it from dataverse
@@ -209,20 +209,20 @@ def build_py_image(self, current_user_id, name, preprocess, dataverse_key='', do
             p_ob = Path(file)
             strp = ''
             for i in e.args:
-                strp = strp + i + ' '
+                strp = strp + str(i) + ' '
             clean_up_datasets(dir_name)
             return {'current': 100, 'total': 100, 'status': ['Error in code.',
-                                                         [[
-                                                              'Error in AST generation of '+p_ob.name,
-                                                              strp]]]}
+                                                             [[
+                                                                 'Error in AST generation of ' + p_ob.name,
+                                                                 strp]]]}
 
         unknown_pkgs = unknown_pkgs.union(unknown)
         docker_pkgs = docker_pkgs.union(dockerpkg)
         if (py3 == False):
             py2 = True
-            
+
     user_pkg_json = {}
-    if(user_pkg != ''):
+    if (user_pkg != ''):
         user_pkg_json = json.loads(user_pkg)["pkg"]
 
     pkg_dict = {}
@@ -290,7 +290,14 @@ def build_py_image(self, current_user_id, name, preprocess, dataverse_key='', do
         new_docker.write('COPY Parser_py.py /home/py_datasets/\n')
         new_docker.write('COPY ReportGenerator.py /home/py_datasets/\n')
         new_docker.write('RUN chmod a+rwx -R /home/py_datasets/' + dir_name + '\n')
-        new_docker.write('RUN pip install noworkflow-alpha[all]\n')
+        # new_docker.write('RUN pip install noworkflow-alpha[all]\n')
+        new_docker.write('WORKDIR /home/\n')
+        new_docker.write('RUN git clone https://github.com/gems-uff/noworkflow.git\n')
+        new_docker.write('WORKDIR /home/noworkflow\n')
+        new_docker.write('RUN git checkout 2.0-alpha\n')
+        new_docker.write('RUN python3 -m pip install -e capture\n')
+        new_docker.write('WORKDIR /home/py_datasets/' + dir_name + '/\n')
+
 
         if docker_pkgs:
             for module in docker_pkgs:
@@ -323,13 +330,12 @@ def build_py_image(self, current_user_id, name, preprocess, dataverse_key='', do
 
     # There is provenance and other information from the analyses in the container.
     # to get it we need to run the container
-    container = client.containers.run(image=repo_name + image_name, environment=["PASSWORD=" + repo_name + image_name],detach=True,command="tail -f /dev/null")
+    container = client.containers.run(image=repo_name + image_name, environment=["PASSWORD=" + repo_name + image_name],
+                                      detach=True, command="tail -f /dev/null")
 
     container_packages = container.exec_run("cat /home/py_datasets/" + dir_name + "/script_info.json")[1].decode()
-    installed_packages = container.exec_run("cat /home/py_datasets/" + dir_name + "/listOfPackages.txt")[1].decode().split("\n")
-    with open("./log.txt", "w+") as log:
-        log.write(str(report))
-    # report = json.dumps(report)
+    installed_packages = container.exec_run("cat /home/py_datasets/" + dir_name + "/listOfPackages.txt")[
+        1].decode().split("\n")
     # Grab the files from inside the container and the filter to just JSON files
     # prov_files = container.exec_run("ls /home/py_datasets/" + dir_name)[1].decode().split("\n")
     # json_files = [prov_file for prov_file in prov_files if ".json" in prov_file]
@@ -364,7 +370,7 @@ def build_py_image(self, current_user_id, name, preprocess, dataverse_key='', do
     # run_log_from_container = container.exec_run("cat " + run_log_path_in_container)
 
     # information from the container is no longer needed
-    
+
     container.kill()
 
     # Finish out report generation
@@ -440,6 +446,6 @@ def build_py_image(self, current_user_id, name, preprocess, dataverse_key='', do
             'status': 'containR has finished! Your new image is accessible from the home page.',
             'result': 42, 'errors': 'No errors!'}
 
+
 def build_docker_package_install(module):
     return "RUN pip install " + module + "\n"
-
