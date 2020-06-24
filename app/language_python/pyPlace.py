@@ -1,22 +1,10 @@
-import os
-import requests
-import cgi
 from pathlib import Path
-import celery
 
-from app.Parse import Parser
-from app.Parser_py import Parser_py
-from app.ReportGenerator import ReportGenerator
 from app.files_list import generate_multimap, generate_modules, generate_set
-from app.helpers import get_pkgs_from_prov_json
-from app.py2or3 import python2or3
+from app.language_python.py2or3 import python2or3
 from app.pathpreprocess import path_preprocess
 from app.ast_test import get_imports
-from app.pylint_parse import pylint_parser
-
-from app import app, db
-from celery.exceptions import Ignore
-from celery.contrib import rdb
+from app.language_python.pylint_parse import pylint_parser
 
 import requests
 import json
@@ -27,8 +15,8 @@ import shutil
 import zipfile
 import docker
 import cgi
-from app.models import User, Dataset
-from app import app, db
+from app.models import User
+from app import app
 
 from shutil import copy
 
@@ -274,11 +262,11 @@ class py_place(language_interface):
                 new_docker.write('FROM python:3\n')
             new_docker.write('WORKDIR /home/py_datasets/' + dir_name + '/\n')
             new_docker.write('ADD ' + dir_name + ' /home/py_datasets/' + dir_name + '\n')
-            copy("app/get_prov_for_doi.sh", "instance/py_datasets/" + dir_name)
-            copy("app/get_dataset_provenance.py", "instance/py_datasets/" + dir_name)
-            copy("app/Parser_py.py", "instance/py_datasets/" + dir_name)
-            copy("app/ReportGenerator.py", "instance/py_datasets/" + dir_name)
-            new_docker.write('COPY get_prov_for_doi.sh /home/py_datasets/\n')
+            # copy("app/get_prov_for_doi.sh", "instance/py_datasets/" + dir_name)
+            copy("app/language_python/get_dataset_provenance.py", "instance/py_datasets/" + dir_name)
+            copy("app/language_python/Parser_py.py", "instance/py_datasets/" + dir_name)
+            copy("app/language_python/ReportGenerator.py", "instance/py_datasets/" + dir_name)
+            # new_docker.write('COPY get_prov_for_doi.sh /home/py_datasets/\n')
             new_docker.write('COPY get_dataset_provenance.py /home/py_datasets/\n')
             new_docker.write('COPY Parser_py.py /home/py_datasets/\n')
             new_docker.write('COPY ReportGenerator.py /home/py_datasets/\n')

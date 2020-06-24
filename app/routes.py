@@ -1,25 +1,19 @@
 import shutil
 import sys
 import os
-import copy
-import json
 # For debugging with headless mode-----------
 import zipfile
-from os import listdir
 from shutil import copyfile
 # -------------------------------------------
 from sqlalchemy import desc
-from flask import render_template, flash, redirect, url_for, request, g, jsonify, session
-from app import app, db, login
-from app.forms import LoginForm, RegistrationForm, ResetPasswordForm, ResetPasswordRequestForm, InputForm
+from flask import render_template, flash, redirect, url_for, request, jsonify, session
+from app import app, db
+from app.forms import LoginForm, RegistrationForm, ResetPasswordRequestForm, InputForm
 from flask_login import current_user, login_user, login_required, logout_user
 from app.models import User, Dataset
-from werkzeug.urls import url_parse
 from werkzeug.utils import secure_filename
-from app.helpers import build_image, gather_json_files_from_url
-from threading import Thread
+from app.helpers import build_image
 from app.start import start_raas
-from app.pyPlace import py_place
 
 
 @app.route('/')

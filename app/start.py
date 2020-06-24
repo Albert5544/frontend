@@ -1,5 +1,5 @@
 from app import celery
-from app.pyPlace import py_place
+from app.language_python.pyPlace import py_place
 
 
 @celery.task(bind=True)
