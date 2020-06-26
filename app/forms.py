@@ -21,9 +21,9 @@ class InputForm(FlaskForm):
 
     language = SelectField('What language is included in your upload', validators=[Required()],
                            choices=[('R', 'R'), ('Python', 'Python')])
-    command_line = StringField('Run instruction')
+    command_line = StringField('Command instruction(use commas to separate different commands)')
     provenance = StringField('Provenance')
-    code_btw = StringField('Line of code to run between package install and  execute')
+    code_btw = StringField('Line of code to run between package install and execute')
     sample_output = FileField('Sample output that you want to compare with',render_kw={'multiple': True})
     pkg_asked =  FieldList(FormField(AddressEntryForm),min_entries=1)
         # StringField('Additional packages to be installed:'
