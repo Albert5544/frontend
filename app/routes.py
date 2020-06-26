@@ -37,7 +37,16 @@ def index():
 @login_required
 def containrize():
     form = InputForm()
-    if form.validate_on_submit():
+    if form.add.data:
+        form.pkg_asked.append_entry()
+        return render_template('containrize.html',
+                               title='Containrize', form=form, show_adv=True)
+    # elif form.pkg_asked:
+    #     for item in form.pkg_asked:
+    #         if item.form.delete.data:
+    #             form.pkg_asked.entries.remove(item)
+    #             break
+    if form.submit.data:
         # TODO: support for DOI or other libraries
         # if form.doi.data:
         #     task = build_image.apply_async(kwargs={'current_user_id': current_user.id,
@@ -60,6 +69,7 @@ def containrize():
             os.makedirs(os.path.join(app.instance_path, 'temp'))
 
         print("MARK1")
+        print(form.zip_file)
         if form.zip_file.data:
             zip_file = form.zip_file.data
             filename = secure_filename(zip_file.filename)
@@ -130,29 +140,36 @@ def containrize():
             if value is not None:
                 json_input["adv_opt"] = json_ad_input
                 break
+        # covert the user package into json format
+        user_pkgs_list=[]
+        if form.pkg_asked.data:
+            for entry in form.pkg_asked.data:
+                print(entry)
+                temp={"pkg_name": entry['package_name'], "PypI_name": entry['pypI_name']}
+                user_pkgs_list.append(temp)
+        user_pkgs_total=str({"pkg":user_pkgs_list}).replace('\'','\"')
+        print(str(user_pkgs_total))
         # TODO: The backend function will be called here
         print("lang" + form.language.data)
-        if form.language.data == "Python":
-            print("python" + form.language.data)
-            # TODO: call to pyPlace
+        if form.language.data == "R":
+            task = build_image.apply_async(kwargs={'zip_file': filename,
+                                                   'current_user_id': current_user.id,
+                                                   'name': form.name.data,
+                                                   'preprocess': form.fix_code.data})
+        else:
             task = start_raas.apply_async(kwargs={'language': form.language.data,
                                                   'zip_file': filename,
                                                   'current_user_id': current_user.id,
                                                   'name': form.name.data,
                                                   'preprocess': form.fix_code.data,
-                                                  'user_pkgs': form.pkg_asked.data,
+                                                  'user_pkgs': user_pkgs_total,
                                                   'run_instr': form.command_line.data})
-        else:
-            # TODO: call to containR
-            task = build_image.apply_async(kwargs={'zip_file': filename,
-                                                   'current_user_id': current_user.id,
-                                                   'name': form.name.data,
-                                                   'preprocess': form.fix_code.data})
+
         session['task_id'] = task.id
         return redirect(url_for('build_status'))
     print("MARK3")
     return render_template('containrize.html',
-                           title='Containrize', form=form)
+                           title='Containrize', form=form, show_adv=False)
 
 
 @app.route('/build-status', methods=['GET', 'POST'])

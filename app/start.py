@@ -33,5 +33,5 @@ def start_raas(self,language, current_user_id, name, preprocess, dataverse_key='
 
     language_obj.push_docker_img(dir_name, current_user_id, name, report)
     return {'current': 5, 'total': 5,
-            'status': 'RaaS has finished! Your new image is accessible from the home page.',
+            'status': 'RAAS has finished! Your new image is accessible from the home page.',
             'result': 42, 'errors': 'No errors!'}
