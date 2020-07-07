@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed
+from flask_wtf.file import FileField
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, FormField, FieldList
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, Optional, Length, Required
 from app.models import User, Dataset
@@ -21,9 +21,9 @@ class InputForm(FlaskForm):
 
     language = SelectField('What language is included in your upload', validators=[Required()],
                            choices=[('R', 'R'), ('Python', 'Python')])
-    command_line = StringField('Command instruction(use commas to separate different commands)')
+    command_line = StringField('Run instruction')
     provenance = StringField('Provenance')
-    code_btw = StringField('Line of code to run between package install and execute')
+    code_btw = StringField('Line of code to run between package install and  execute')
     sample_output = FileField('Sample output that you want to compare with',render_kw={'multiple': True})
     pkg_asked =  FieldList(FormField(AddressEntryForm),min_entries=1)
         # StringField('Additional packages to be installed:'
@@ -41,6 +41,8 @@ class InputForm(FlaskForm):
                                   'containing the dataset is required.')
 
     def validate_name(self, name):
+        if name.data =="":
+            raise ValidationError('Name cannot be an empty string')
         if " " in name.data or not name.data.islower():
             raise ValidationError('Name is not allowed to contain uppercase letter or space.\nTry: '
                                   + name.data.replace(" ", "").lower())
